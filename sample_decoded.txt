@@ -1,0 +1,17 @@
+The Adaptive Huffman coding algorithm, also known as the FGK algorithm (Faller, Gallager, Knuth),
+is a dynamic data compression technique that builds its encoding tree on-the-fly as data is being
+processed. Unlike static Huffman coding, which requires two passes (one to build the tree, one to
+encode), adaptive Huffman updates the tree incrementally with each new symbol encountered.
+
+This approach is particularly useful for streaming data where the frequency distribution is unknown
+in advance. The algorithm maintains a single "Not Yet Transmitted" (NYT) node representing symbols
+that haven't been encountered yet. When a new symbol appears, the NYT node splits into two children:
+a new leaf for that symbol and a new NYT node for future unknown symbols.
+
+The beauty of adaptive Huffman lies in its automatic adaptation to the data's statistical properties.
+As frequently occurring symbols accumulate higher frequencies, their codes become shorter, while rarely
+used symbols get longer codes. This continuous optimization makes it ideal for compressing diverse data
+streams without the overhead of storing frequency tables.
+
+Modern compression systems often use variations of adaptive Huffman as a foundation, sometimes combined
+with other techniques like run-length encoding or dictionary-based methods for improved compression ratios.
