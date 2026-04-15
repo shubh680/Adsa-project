@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Compression - ADSA</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 24px;
+        }
+
+        .panel h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #222;
+        }
+
+        .upload-zone {
+            border: 2px dashed #d0d0d0;
+            border-radius: 4px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .upload-zone:hover {
+            border-color: #999;
+            background: #f0f0f0;
+        }
+
+        .upload-zone.dragover {
+            border-color: #333;
+            background: #f0f0f0;
+        }
+
+        .upload-zone-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .upload-zone-text {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-info {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 16px;
+            margin: 16px 0;
+            font-size: 13px;
+        }
+
+        .file-info-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .file-info-size {
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #333;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 13px;
+            background: white;
+            cursor: pointer;
+        }
+
+        select:hover {
+            border-color: #999;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        button {
+            flex: 1;
+            padding: 10px 16px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover:not(:disabled) {
+            background: #555;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: white;
+            color: #333;
+            border: 1px solid #d0d0d0;
+        }
+
+        button.secondary:hover:not(:disabled) {
+            background: #f5f5f5;
+        }
+
+        .stats-container {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 24px;
+            margin-top: 30px;
+            display: none;
+        }
+
+        .stats-container.show {
+            display: block;
+        }
+
+        .stats-header {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat {
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 12px;
+            background: #fafafa;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #333;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .download-button {
+            width: 100%;
+            padding: 10px 16px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        .download-button:hover {
+            background: #555;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 4px;
+            color: white;
+            font-size: 13px;
+            animation: slideIn 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        .toast.success {
+            background: #27ae60;
+        }
+
+        .toast.error {
+            background: #e74c3c;
+        }
+
+        .toast.info {
+            background: #3498db;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .status-message {
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>File Compression</h1>
+            <p class="subtitle">Compress and decompress files with advanced algorithms</p>
+        </header>
+
+        <div class="content">
+            <div class="panel">
+                <h2>Compress</h2>
+                
+                <div class="upload-zone" id="compressZone">
+                    <div class="upload-zone-icon">↓</div>
+                    <div class="upload-zone-text">Drag and drop file or click to select</div>
+                    <input type="file" id="compressInput" class="file-input">
+                </div>
+
+                <div id="compressFileInfo" class="file-info" style="display: none;">
+                    <div class="file-info-name" id="compressFileName"></div>
+                    <div class="file-info-size" id="compressFileSize"></div>
+                </div>
+
+                <button id="compressBtn" style="width: 100%; margin-top: 24px;" disabled>Compress</button>
+
+                <div id="compressStatus" class="status-message"></div>
+            </div>
+
+            <div class="panel">
+                <h2>Decompress</h2>
+                
+                <div class="upload-zone" id="decompressZone">
+                    <div class="upload-zone-icon">↑</div>
+                    <div class="upload-zone-text">Drag and drop compressed file or click to select</div>
+                    <input type="file" id="decompressInput" class="file-input">
+                </div>
+
+                <div id="decompressFileInfo" class="file-info" style="display: none;">
+                    <div class="file-info-name" id="decompressFileName"></div>
+                    <div class="file-info-size" id="decompressFileSize"></div>
+                </div>
+
+                <button id="decompressBtn" style="width: 100%; margin-top: 24px;" disabled>Decompress</button>
+
+                <div id="decompressStatus" class="status-message"></div>
+            </div>
+        </div>
+
+        <div class="stats-container" id="statsContainer">
+            <div class="stats-header" id="statsTitle">Compression Results</div>
+            
+            <div id="progressContainer" style="display: none;">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <div class="stats-grid" id="statsGrid"></div>
+
+            <button id="downloadBtn" class="download-button" style="display: none;">Download File</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        
+        let compressFile = null;
+        let decompressFile = null;
+        let compressedData = null;
+        let decompressedData = null;
+        let originalFilename = 'decompressed';
+
+        // Setup drag-and-drop and click handlers
+        setupUploadZone('compressZone', 'compressInput', 'compress');
+        setupUploadZone('decompressZone', 'decompressInput', 'decompress');
+
+        // Button handlers
+        document.getElementById('compressBtn').addEventListener('click', compress);
+        document.getElementById('decompressBtn').addEventListener('click', decompress);
+        document.getElementById('downloadBtn').addEventListener('click', downloadFile);
+
+        function setupUploadZone(zoneId, inputId, type) {
+            const zone = document.getElementById(zoneId);
+            const input = document.getElementById(inputId);
+
+            input.addEventListener('change', (e) => {
+                if (e.target.files[0]) {
+                    handleFileSelect(e.target.files[0], type);
+                }
+            });
+
+            zone.addEventListener('click', () => input.click());
+
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('dragover');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('dragover');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                if (e.dataTransfer.files[0]) {
+                    handleFileSelect(e.dataTransfer.files[0], type);
+                }
+            });
+        }
+
+        function handleFileSelect(file, type) {
+            if (type === 'compress') {
+                compressFile = file;
+                document.getElementById('compressFileName').textContent = file.name;
+                document.getElementById('compressFileSize').textContent = formatBytes(file.size);
+                document.getElementById('compressFileInfo').style.display = 'block';
+                document.getElementById('compressBtn').disabled = false;
+            } else {
+                decompressFile = file;
+                document.getElementById('decompressFileName').textContent = file.name;
+                document.getElementById('decompressFileSize').textContent = formatBytes(file.size);
+                document.getElementById('decompressFileInfo').style.display = 'block';
+                document.getElementById('decompressBtn').disabled = false;
+            }
+        }
+
+        function formatBytes(bytes) {
+            if (typeof bytes !== 'number' || bytes < 0) return bytes;
+            if (bytes < 1024) return `${bytes} B`;
+            const kb = bytes / 1024;
+            if (kb < 1024) return `${kb.toFixed(2)} KB`;
+            return `${(kb / 1024).toFixed(2)} MB`;
+        }
+
+        function formatStatValue(key, value) {
+            if (typeof value !== 'number') return value;
+            if (key === 'compression_ratio' || key === 'decompression_ratio') {
+                return `${(value * 100).toFixed(2)}%`;
+            }
+            if (key === 'original_size' || key === 'compressed_size' || key === 'decompressed_size') {
+                return formatBytes(value);
+            }
+            if (key === 'time') {
+                return `${value.toFixed(3)} s`;
+            }
+            return value.toFixed(3);
+        }
+
+        async function checkHealth() {
+            try {
+                await axios.get(API_BASE + '/health', { timeout: 5000 });
+                return true;
+            } catch {
+                showToast('Backend server not running on localhost:5000', 'error');
+                return false;
+            }
+        }
+
+        async function compress() {
+            if (!compressFile) {
+                showToast('Please select a file', 'error');
+                return;
+            }
+
+            if (!await checkHealth()) return;
+
+            document.getElementById('compressBtn').disabled = true;
+            document.getElementById('compressStatus').textContent = 'Compressing...';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', compressFile);
+                formData.append('algorithm', 'auto');
+
+                const response = await axios.post(API_BASE + '/compress', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                    timeout: 60000
+                });
+
+                compressedData = response.data.compressed_data;
+                decompressedData = null;
+                displayStats(response.data.stats, 'Compression Complete');
+                showToast('Compression successful', 'success');
+                document.getElementById('compressStatus').textContent = 'Compression complete.';
+                document.getElementById('downloadBtn').style.display = 'block';
+                document.getElementById('downloadBtn').textContent = 'Download Compressed File';
+            } catch (error) {
+                showToast('Compression failed: ' + (error.response?.data?.error || error.message), 'error');
+                document.getElementById('compressStatus').textContent = 'Error: ' + (error.response?.data?.error || error.message);
+            } finally {
+                document.getElementById('compressBtn').disabled = false;
+            }
+        }
+
+        async function decompress() {
+            if (!decompressFile) {
+                showToast('Please select a file', 'error');
+                return;
+            }
+
+            if (!await checkHealth()) return;
+
+            document.getElementById('decompressBtn').disabled = true;
+            document.getElementById('decompressStatus').textContent = 'Decompressing...';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', decompressFile);
+
+                const response = await axios.post(API_BASE + '/decompress', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                    timeout: 60000
+                });
+
+                decompressedData = response.data.decompressed_data;
+                compressedData = null;
+                originalFilename = response.data.original_filename || 'decompressed';
+                displayStats(response.data.stats, 'Decompression Complete');
+                showToast('Decompression successful', 'success');
+                document.getElementById('decompressStatus').textContent = 'Decompression complete.';
+                document.getElementById('downloadBtn').style.display = 'block';
+                document.getElementById('downloadBtn').textContent = 'Download Original File';
+            } catch (error) {
+                showToast('Decompression failed: ' + (error.response?.data?.error || error.message), 'error');
+                document.getElementById('decompressStatus').textContent = 'Error: ' + (error.response?.data?.error || error.message);
+            } finally {
+                document.getElementById('decompressBtn').disabled = false;
+            }
+        }
+
+        function displayStats(stats, title) {
+            const container = document.getElementById('statsContainer');
+            const grid = document.getElementById('statsGrid');
+
+            document.getElementById('statsTitle').textContent = title;
+            grid.innerHTML = '';
+
+            for (const [key, value] of Object.entries(stats)) {
+                if (key === 'entropy') continue;
+                const stat = document.createElement('div');
+                stat.className = 'stat';
+                stat.innerHTML = `
+                    <div class="stat-label">${key}</div>
+                    <div class="stat-value">${formatStatValue(key, value)}</div>
+                `;
+                grid.appendChild(stat);
+            }
+
+            container.classList.add('show');
+        }
+
+        function downloadFile() {
+            try {
+                const data = compressedData || decompressedData;
+                let filename;
+                
+                if (compressedData) {
+                    filename = 'compressed.bin';
+                } else {
+                    filename = originalFilename || 'decompressed';
+                }
+
+                const byteCharacters = atob(data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray]);
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                showToast('Download failed: ' + error.message, 'error');
+            }
+        }
+
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
+
+    <script>
+        // Application State
+        let appState = {
+            selectedFile: null,
+            isCompressing: false,
+            isDecompressing: false,
+            compressionStats: null,
+            decompressionStats: null,
+            selectedAlgorithm: 'auto',
+            analysisResult: null
+        };
+
+        const API_BASE = 'http://localhost:5000/api';
+
+        // DOM Elements
+        const app = document.getElementById('root');
+
+        // Render the app
+        function render() {
+            app.innerHTML = `
+                <div class="min-h-screen py-8 px-4">
+                    ${renderHeader()}
+                    <div class="max-w-6xl mx-auto">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            ${renderFileUpload()}
+                            ${renderCompressionTools()}
+                        </div>
+                        ${renderResults()}
+                        ${renderAlgorithms()}
+                    </div>
+                </div>
+            `;
+            
+            attachEventListeners();
+        }
+
+        function renderHeader() {
+            return `
+                <div class="text-center mb-12">
+                    <h1 class="text-5xl font-bold text-white mb-4">
+                        <span class="gradient-text">ADSA File Compression</span>
+                    </h1>
+                    <p class="text-white/80 text-lg">
+                        Intelligent file compression with RLE + Huffman algorithms
+                    </p>
+                </div>
+            `;
+        }
+
+        function renderFileUpload() {
+            return `
+                <div class="lg:col-span-2">
+                    <div class="glass-effect rounded-2xl p-8 text-white">
+                        <h2 class="text-2xl font-bold mb-6">Upload & Compress</h2>
+                        
+                        <div class="drag-drop-zone border-2 border-dashed border-white/30 rounded-xl p-8 text-center cursor-pointer hover:border-white/50 transition mb-6"
+                             id="dropZone">
+                            <svg class="w-12 h-12 mx-auto mb-4 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-lg mb-2">Drag and drop your file here</p>
+                            <p class="text-sm opacity-70 mb-4">or click to select</p>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="fileInput" />
+                                <button class="btn-primary bg-white/20 hover:bg-white/30 px-6 py-2 rounded-lg">
+                                    Choose File
+                                </button>
+                            </div>
+                        </div>
+                        
+                        ${renderSelectedFile()}
+                        
+                        <div class="mb-6">
+                            <label class="text-sm font-semibold mb-3 block">Algorithm</label>
+                            <select id="algorithmSelect" class="w-full bg-white/10 border border-white/20 text-white rounded-lg px-4 py-2">
+                                <option value="auto">🤖 Intelligent Auto-Select</option>
+                                <option value="rle_huffman">🔄 RLE + Huffman</option>
+                                <option value="huffman">📊 Huffman Only</option>
+                                <option value="deflate">📦 DEFLATE</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex gap-4">
+                            <button id="analyzeBtn" class="flex-1 btn-primary text-white font-semibold py-3 rounded-lg disabled:opacity-50" 
+                                    ${!appState.selectedFile ? 'disabled' : ''}>
+                                🔍 Analyze
+                            </button>
+                            <button id="compressBtn" class="flex-1 btn-primary text-white font-semibold py-3 rounded-lg disabled:opacity-50"
+                                    ${appState.isCompressing || !appState.selectedFile ? 'disabled' : ''}>
+                                ${appState.isCompressing ? '⏳ Compressing...' : '📦 Compress'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSelectedFile() {
+            if (!appState.selectedFile) return '';
+            
+            const size = (appState.selectedFile.size / 1024).toFixed(2);
+            return `
+                <div class="bg-white/10 rounded-lg p-4 mb-6">
+                    <p class="text-sm font-semibold mb-2">📄 Selected File</p>
+                    <p class="text-white/80">${appState.selectedFile.name}</p>
+                    <p class="text-sm opacity-60">${size} KB</p>
+                </div>
+            `;
+        }
+
+        function renderCompressionTools() {
+            return `
+                <div>
+                    <div class="glass-effect rounded-2xl p-8 text-white">
+                        <h2 class="text-2xl font-bold mb-6">Decompress</h2>
+                        
+                        <div class="bg-white/10 border border-white/20 rounded-xl p-6 text-center cursor-pointer hover:bg-white/15 transition"
+                             id="decompressDropZone">
+                            <svg class="w-10 h-10 mx-auto mb-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 13l3 3m0 0l3-3m-3 3V8"></path>
+                            </svg>
+                            <p class="text-sm mb-3">Drop compressed file here</p>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="decompressFileInput" />
+                                <button class="btn-primary bg-white/20 hover:bg-white/30 px-4 py-2 rounded text-sm">
+                                    Choose
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button id="decompressBtn" class="w-full mt-6 btn-primary text-white font-semibold py-3 rounded-lg disabled:opacity-50"
+                                disabled>
+                            🔓 Decompress
+                        </button>
+                    </div>
+                    
+                    ${renderQuickStats()}
+                </div>
+            `;
+        }
+
+        function renderQuickStats() {
+            if (!appState.compressionStats && !appState.decompressionStats) return '';
+            
+            const stats = appState.compressionStats || appState.decompressionStats;
+            const ratio = stats.compression_ratio ? (stats.compression_ratio * 100).toFixed(2) : 'N/A';
+            
+            return `
+                <div class="glass-effect rounded-2xl p-8 text-white mt-6">
+                    <h3 class="text-lg font-bold mb-4">📊 Quick Stats</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="opacity-70">Compression Ratio:</span>
+                            <span class="stat-value">${ratio}%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="opacity-70">Time:</span>
+                            <span class="font-semibold">${(stats.time || 0).toFixed(3)}s</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="opacity-70">Algorithm:</span>
+                            <span class="font-semibold text-sm">${stats.algorithm || 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderResults() {
+            if (!appState.compressionStats && !appState.decompressionStats && !appState.analysisResult) return '';
+            
+            return `
+                <div class="glass-effect rounded-2xl p-8 text-white mt-8">
+                    <h2 class="text-2xl font-bold mb-6">📈 Detailed Results</h2>
+                    ${renderCompressionResults()}
+                    ${renderDecompressionResults()}
+                    ${renderAnalysisResults()}
+                </div>
+            `;
+        }
+
+        function renderCompressionResults() {
+            if (!appState.compressionStats) return '';
+            
+            const stats = appState.compressionStats;
+            const originalMB = (stats.original_size / (1024 * 1024)).toFixed(3);
+            const compressedMB = (stats.compressed_size / (1024 * 1024)).toFixed(3);
+            const ratio = (stats.compression_ratio * 100).toFixed(2);
+            
+            return `
+                <div class="mb-8 p-6 bg-white/5 rounded-xl border border-white/10">
+                    <h3 class="text-lg font-semibold mb-4">✅ Compression Complete</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="stat-item">
+                            <div class="stat-value">${originalMB}</div>
+                            <div class="text-xs opacity-60">Original (MB)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${compressedMB}</div>
+                            <div class="text-xs opacity-60">Compressed (MB)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${ratio}%</div>
+                            <div class="text-xs opacity-60">Ratio</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${(stats.time || 0).toFixed(3)}s</div>
+                            <div class="text-xs opacity-60">Time</div>
+                        </div>
+                    </div>
+                    ${renderProgressBar(stats.compression_ratio)}
+                    <div class="mt-4 text-sm">
+                        <p>Algorithm: <strong>${stats.algorithm}</strong></p>
+                        ${stats.compression_type ? `<p>Data Type: <strong>${stats.compression_type}</strong></p>` : ''}
+                        ${stats.entropy !== undefined ? `<p>Entropy: <strong>${(stats.entropy * 100).toFixed(1)}%</strong></p>` : ''}
+                    </div>
+                    <button id="downloadCompressed" class="mt-4 btn-primary text-white px-4 py-2 rounded-lg text-sm">
+                        ⬇️ Download Compressed File
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderDecompressionResults() {
+            if (!appState.decompressionStats) return '';
+            
+            const stats = appState.decompressionStats;
+            const compressedMB = (stats.compressed_size / (1024 * 1024)).toFixed(3);
+            const decompressedMB = (stats.decompressed_size / (1024 * 1024)).toFixed(3);
+            
+            return `
+                <div class="p-6 bg-white/5 rounded-xl border border-white/10">
+                    <h3 class="text-lg font-semibold mb-4">✅ Decompression Complete</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="stat-item">
+                            <div class="stat-value">${compressedMB}</div>
+                            <div class="text-xs opacity-60">Compressed (MB)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${decompressedMB}</div>
+                            <div class="text-xs opacity-60">Decompressed (MB)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${(stats.time || 0).toFixed(3)}s</div>
+                            <div class="text-xs opacity-60">Time</div>
+                        </div>
+                    </div>
+                    <button id="downloadDecompressed" class="btn-primary text-white px-4 py-2 rounded-lg text-sm">
+                        ⬇️ Download Original File
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderAnalysisResults() {
+            if (!appState.analysisResult) return '';
+            
+            const result = appState.analysisResult;
+            const entropyPercent = (result.entropy * 100).toFixed(1);
+            
+            return `
+                <div class="p-6 bg-white/5 rounded-xl border border-white/10">
+                    <h3 class="text-lg font-semibold mb-4">🔍 File Analysis</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <p class="text-sm opacity-70 mb-2">File Size</p>
+                            <p class="text-xl font-bold">${(result.file_size / 1024).toFixed(2)} KB</p>
+                        </div>
+                        <div>
+                            <p class="text-sm opacity-70 mb-2">Entropy</p>
+                            <p class="text-xl font-bold">${entropyPercent}%</p>
+                        </div>
+                        <div>
+                            <p class="text-sm opacity-70 mb-2">Data Pattern</p>
+                            <p class="text-xl font-bold">${result.compression_type}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm opacity-70 mb-2">Recommended</p>
+                            <p class="text-xl font-bold">${result.recommended_algorithm}</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 space-y-2 text-sm">
+                        <p>✓ Long runs detected: <strong>${result.has_long_runs ? 'Yes' : 'No'}</strong></p>
+                        <p>✓ Structured data detected: <strong>${result.has_delimiters ? 'Yes' : 'No'}</strong></p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderProgressBar(ratio) {
+            const percentage = Math.min(ratio * 100, 100);
+            return `
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${percentage}%"></div>
+                </div>
+            `;
+        }
+
+        function renderAlgorithms() {
+            return `
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    ${renderAlgorithmCard('🤖', 'Auto-Select', 'Analyzes your file and picks the best algorithm automatically')}
+                    ${renderAlgorithmCard('🔄', 'RLE + Huffman', 'Perfect for files with repetitive patterns (99%+ compression)')}
+                    ${renderAlgorithmCard('📊', 'Huffman Only', 'Good general-purpose compression for most file types')}
+                    ${renderAlgorithmCard('📦', 'DEFLATE', 'Excellent for structured data like CSV and JSON files')}
+                </div>
+            `;
+        }
+
+        function renderAlgorithmCard(icon, title, description) {
+            return `
+                <div class="glass-effect rounded-2xl p-6 text-white card-hover cursor-pointer">
+                    <div class="text-3xl mb-3">${icon}</div>
+                    <h3 class="font-bold text-lg mb-2">${title}</h3>
+                    <p class="text-sm opacity-70">${description}</p>
+                </div>
+            `;
+        }
+
+        // Event Listeners
+        function attachEventListeners() {
+            // File upload
+            const fileInput = document.getElementById('fileInput');
+            const dropZone = document.getElementById('dropZone');
+            
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    appState.selectedFile = e.target.files[0];
+                    render();
+                }
+            });
+            
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    appState.selectedFile = e.dataTransfer.files[0];
+                    render();
+                }
+            });
+            
+            // Decompress file upload
+            const decompressFileInput = document.getElementById('decompressFileInput');
+            const decompressDropZone = document.getElementById('decompressDropZone');
+            let decompressFile = null;
+            
+            decompressFileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    decompressFile = e.target.files[0];
+                    document.getElementById('decompressBtn').disabled = false;
+                }
+            });
+            
+            decompressDropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                decompressDropZone.classList.add('dragover');
+            });
+            
+            decompressDropZone.addEventListener('dragleave', () => {
+                decompressDropZone.classList.remove('dragover');
+            });
+            
+            decompressDropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                decompressDropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    decompressFile = e.dataTransfer.files[0];
+                    document.getElementById('decompressBtn').disabled = false;
+                }
+            });
+            
+            // Algorithm select
+            document.getElementById('algorithmSelect').addEventListener('change', (e) => {
+                appState.selectedAlgorithm = e.target.value;
+            });
+            
+            // Buttons
+            document.getElementById('compressBtn')?.addEventListener('click', () => compressFile());
+            document.getElementById('analyzeBtn')?.addEventListener('click', () => analyzeFile());
+            document.getElementById('decompressBtn')?.addEventListener('click', () => decompressFile_(decompressFileInput.files[0] || decompressFile));
+            document.getElementById('downloadCompressed')?.addEventListener('click', () => downloadFile(appState.compressedData, 'compressed.bin'));
+            document.getElementById('downloadDecompressed')?.addEventListener('click', () => downloadFile(appState.decompressedData, 'decompressed'));
+        }
+
+        async function compressFile() {
+            if (!appState.selectedFile) {
+                showToast('Please select a file', 'error');
+                return;
+            }
+            
+            appState.isCompressing = true;
+            render();
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', appState.selectedFile);
+                formData.append('algorithm', appState.selectedAlgorithm);
+                formData.append('verbose', 'false');
+                
+                const response = await axios.post(`${API_BASE}/compress`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                
+                appState.compressionStats = response.data.stats;
+                appState.compressedData = response.data.compressed_data;
+                
+                showToast('✅ Compression complete!', 'success');
+                render();
+            } catch (error) {
+                showToast(`❌ Compression failed: ${error.response?.data?.error || error.message}`, 'error');
+            } finally {
+                appState.isCompressing = false;
+                render();
+            }
+        }
+
+        async function analyzeFile() {
+            if (!appState.selectedFile) {
+                showToast('Please select a file', 'error');
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', appState.selectedFile);
+                
+                const response = await axios.post(`${API_BASE}/analyze`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                
+                appState.analysisResult = response.data.analysis;
+                showToast('✅ Analysis complete!', 'success');
+                render();
+            } catch (error) {
+                showToast(`❌ Analysis failed: ${error.response?.data?.error || error.message}`, 'error');
+            }
+        }
+
+        async function decompressFile_(file) {
+            if (!file) {
+                showToast('Please select a file', 'error');
+                return;
+            }
+            
+            appState.isDecompressing = true;
+            render();
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await axios.post(`${API_BASE}/decompress`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                
+                appState.decompressionStats = response.data.stats;
+                appState.decompressedData = response.data.decompressed_data;
+                
+                showToast('✅ Decompression complete!', 'success');
+                render();
+            } catch (error) {
+                showToast(`❌ Decompression failed: ${error.response?.data?.error || error.message}`, 'error');
+            } finally {
+                appState.isDecompressing = false;
+                render();
+            }
+        }
+
+        function downloadFile(base64Data, filename) {
+            try {
+                const byteCharacters = atob(base64Data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/octet-stream' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                showToast('Download failed', 'error');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Initial render
+        render();
+    </script>
+</body>
+</html>
