@@ -11,6 +11,8 @@ Algorithm:
 - Decoding: Expand (byte, count) pairs back to original runs
 """
 
+from typing import List, Union
+
 
 class RLE:
     """
@@ -21,40 +23,45 @@ class RLE:
     - Runs of 2+ identical bytes: encoded as (escape=255, byte, count)
     - Preserves non-repetitive data (no expansion for count=1)
     """
-    
+
     # Escape byte to mark RLE sequences (255 is relatively rare in most files)
-    ESCAPE = 255
-    RLE_MARKER = 255  # When followed by ESCAPE, marks an RLE sequence
-    
+    ESCAPE: int = 255
+    RLE_MARKER: int = 255  # When followed by ESCAPE, marks an RLE sequence
+
     @staticmethod
-    def encode(data):
+    def encode(data: Union[List[int], bytes]) -> List[int]:
         """
         Encode data using Run-Length Encoding.
-        
+
         Format:
         - Single unique byte: byte (as-is)
         - Run of 2+ identical bytes: [255, byte, count]
-        
+
         Args:
-            data: List or bytes of integers (0-255).
-        
+            data: List of integers (0-255) or bytes.
+
         Returns:
             List of encoded bytes.
         """
         if not data:
             return []
-        
-        encoded = []
-        i = 0
-        
-        while i < len(data):
+
+        encoded: List[int] = []
+        i: int = 0
+        data_len: int = len(data)
+
+        while i < data_len:
             byte = data[i]
             run_length = 1
-            
+
             # Count consecutive identical bytes
-            while i + run_length < len(data) and data[i + run_length] == byte and run_length < 255:
+            while (
+                i + run_length < data_len
+                and data[i + run_length] == byte
+                and run_length < 255
+            ):
                 run_length += 1
-            
+
             if run_length >= 2:
                 # Encode as RLE sequence: [ESCAPE, byte, count]
                 encoded.append(RLE.ESCAPE)
@@ -70,35 +77,36 @@ class RLE:
                 else:
                     encoded.append(byte)
                 i += 1
-        
+
         return encoded
-    
+
     @staticmethod
-    def decode(data):
+    def decode(data: List[int]) -> List[int]:
         """
         Decode RLE-encoded data back to original.
-        
+
         Args:
             data: List of RLE-encoded bytes.
-        
+
         Returns:
             List of original bytes.
         """
         if not data:
             return []
-        
-        decoded = []
-        i = 0
-        
-        while i < len(data):
+
+        decoded: List[int] = []
+        i: int = 0
+        data_len: int = len(data)
+
+        while i < data_len:
             byte = data[i]
-            
+
             if byte == RLE.ESCAPE:
                 # Check if this is an RLE sequence
-                if i + 2 < len(data):
+                if i + 2 < data_len:
                     next_byte = data[i + 1]
                     count = data[i + 2]
-                    
+
                     # Expand the run
                     decoded.extend([next_byte] * count)
                     i += 3
@@ -110,5 +118,5 @@ class RLE:
                 # Regular byte
                 decoded.append(byte)
                 i += 1
-        
+
         return decoded
